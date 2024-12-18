@@ -9,7 +9,7 @@ ARG CODE_RELEASE
 LABEL build_version="Linuxserver.io version:- ${VERSION} Build-date:- ${BUILD_DATE}"
 LABEL maintainer="aptalca"
 
-# environment settings
+# environment settings
 ARG DEBIAN_FRONTEND="noninteractive"
 ENV HOME="/config"
 
@@ -17,30 +17,39 @@ RUN \
   echo "**** install runtime dependencies ****" && \
   apt-get update && \
   apt-get install -y \
-    git \
-    libatomic1 \
-    nano \
-    net-tools \
-    sudo && \
+  git \
+  libatomic1 \
+  nano \
+  net-tools \
+  sudo \
+  curl && \
+  echo "**** install Node.js and npm ****" && \
+  curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+  apt-get install -y nodejs && \
+  echo "**** install Flutter dependencies ****" && \
+  apt-get install -y \
+  openjdk-11-jdk \
+  unzip \
+  xz-utils && \
   echo "**** install code-server ****" && \
   if [ -z ${CODE_RELEASE+x} ]; then \
-    CODE_RELEASE=$(curl -sX GET https://api.github.com/repos/coder/code-server/releases/latest \
-      | awk '/tag_name/{print $4;exit}' FS='[""]' | sed 's|^v||'); \
+  CODE_RELEASE=$(curl -sX GET https://api.github.com/repos/coder/code-server/releases/latest \
+  | awk '/tag_name/{print $4;exit}' FS='["\"]' | sed 's|^v||'); \
   fi && \
   mkdir -p /app/code-server && \
   curl -o \
-    /tmp/code-server.tar.gz -L \
-    "https://github.com/coder/code-server/releases/download/v${CODE_RELEASE}/code-server-${CODE_RELEASE}-linux-amd64.tar.gz" && \
+  /tmp/code-server.tar.gz -L \
+  "https://github.com/coder/code-server/releases/download/v${CODE_RELEASE}/code-server-${CODE_RELEASE}-linux-amd64.tar.gz" && \
   tar xf /tmp/code-server.tar.gz -C \
-    /app/code-server --strip-components=1 && \
+  /app/code-server --strip-components=1 && \
   printf "Linuxserver.io version: ${VERSION}\nBuild-date: ${BUILD_DATE}" > /build_version && \
   echo "**** clean up ****" && \
   apt-get clean && \
   rm -rf \
-    /config/* \
-    /tmp/* \
-    /var/lib/apt/lists/* \
-    /var/tmp/*
+  /config/* \
+  /tmp/* \
+  /var/lib/apt/lists/* \
+  /var/tmp/*
 
 # add local files
 COPY /root /
